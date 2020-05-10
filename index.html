@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Chessboard</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="./css/index.css">
+	<link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+	<link rel="shortcut icon" type="image/png" href="img/icon.png">
+	<script src='https://kit.fontawesome.com/a076d05399.js'></script>
+</head>
+<body>
+
+	<!-- Intro -->
+	<div id="main-container-one">
+		<div id="intro">
+			<h1>CHESSBOARD</h1>
+			<p>Square Name Memorization Game</p>
+		</div>
+		<div id="options-container">
+			<div class="option-wrapper">
+				<div class="option">
+					<i id="to-intro" class='fas fa-chess-board glyph-style'></i>
+				</div>
+				<p class="when-hover">INTRODUCTION</p>
+			</div>
+			<div class="option-wrapper">
+				<div class="option">
+					<i id="to-game" class='fas fa-chess glyph-style'></i>
+				</div>
+				<p class="when-hover">GAME</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Game Container -->
+	<div id="main-container-two">
+		<div id="table"></div>
+		<div id="game-one-stuff">
+			<div id="board-color"></div>
+			<div id="monitor"></div>
+			<div id="clock">
+				<span>0</span>
+			</div>
+			<p id="points-text">POINTS:</p>
+			<div id="points-monitor">
+				<span></span>
+			</div>
+			<div id="cancel-btn" class="bullet-point-container">
+				<div class="bullet-point-origin">
+					<div class="bullet-point"></div>
+				</div>
+			</div>
+			<p id="cancel-text">CANCEL</p>
+		</div>
+	</div>
+
+	<!-- Game Menu -->
+	<div id="menu" class="my-menu">
+		<div id="top-scores-container">
+			<div id="top-scores-div"></div>
+			<button class="my-btn" id="back-two">BACK</button>
+		</div>
+		<div id="centered-content">
+			<h1 id="score-div"></h1>
+			<button id="color-choice-2" class="color-choice">
+				<div class="color-choice-item"></div>
+				<div class="themes" id="themes-2">
+					<div class="col">
+						<div class="col-box wood"></div>
+						<div id="w-theme-2" class="col-choice">Wood Theme</div>
+					</div>
+					<div class="col">
+						<div class="col-box green"></div>
+						<div id="g-theme-2" class="col-choice">Green Theme</div>
+					</div>
+					<div class="col">
+						<div class="col-box blue"></div>
+						<div id="b-theme-2" class="col-choice">Blue Theme</div>
+					</div>
+					<div class="col">
+						<div class="col-box black"></div>
+						<div id="bl-theme-2" class="col-choice">Black Theme</div>
+					</div>
+				</div>
+			</button>
+			<div class="flexy" id="flexy-two">
+				<button class="my-btn" id="back-one">BACK</button>
+				<button class="my-btn" id="table-btn">START</button>
+				<button class="my-btn" id="scores-btn">SCORES</button>
+			</div>
+			<div class="dot"></div>
+			<p id="dot-p">Score points by clicking on the right square. You will have 30 seconds. You will randomly be dealt white side or black side.</p>
+		</div>
+	</div>
+
+	<!-- Tutorial -->
+	<div id="introduction">
+		<h1 class="tutorialTitle">INTRODUCTION</h1>
+		<div id="introduction-two">
+			<p>This program is made for players new to chess to help facilitate their
+			efforts in learning the game as quickly as possible. Big part
+			of that is getting familiar with the name system of a chessboard, 
+			which is essential for reading books about chess and for spatial awareness.</p>
+			<div id="flexy-one" class="flexy">
+				<button id="board-side-btn" class="color-choice">
+					<div class="color-choice-item"></div>
+					<span id="text-under">CHANGE TO<br>BLACK SIDE</span>
+				</button>
+				<button id="color-choice-one" class="color-choice">
+					<div class="color-choice-item"></div>
+					<div class="themes" id="themes-1">
+						<div class="col">
+							<div class="col-box wood"></div>
+							<div id="w-theme" class="col-choice">Wood Theme</div>
+						</div>
+						<div class="col">
+							<div class="col-box green"></div>
+							<div id="g-theme" class="col-choice">Green Theme</div>
+						</div>
+						<div class="col">
+							<div class="col-box blue"></div>
+							<div id="b-theme" class="col-choice">Blue Theme</div>
+						</div>
+						<div class="col">
+							<div class="col-box black"></div>
+							<div id="bl-theme" class="col-choice">Black Theme</div>
+						</div>
+					</div>
+				</button>
+			</div>
+			<div id="table-two"></div>
+			<span id="under-pic">Standard Chessboard</span>
+			<p>A chessboard is a coordinate system. Rows are identified by numbers,
+			while columns are identified by the first eight letters of the alphabet. There are
+			eight rows and eight columns, which makes for sixty-four sqaures. Each square
+			is identified by its column name followed by its row number, like "a1" or "g7". The aim of this program is to embed position names in your mind, so they can become
+			a part of your intuition and thus help you on your way to mastery of chess.<br><br>Names are absolute, meaning that the white and black players are naming the
+			same sqaures with the same names. The closest row to the white player is number one while the closest one to the black player is number eight.</p>
+			<button id="back-three" class="my-btn">BACK</button>
+		</div>
+	</div>
+
+	<!-- Audio Stuff -->
+	<div>
+		<audio id="wrong-sound">
+			<source src="./audio/wrong1.wav" type="audio/mpeg">
+		</audio>
+		<audio id="correct-sound">
+			<source src="./audio/correct1.wav" type="audio/mpeg">
+		</audio>
+		<audio id="start-sound">
+			<source src="./audio/start.wav" type="audio/mpeg">
+		</audio>
+		<audio id="timer-sound">
+			<source src="./audio/timer.wav" type="audio/mpeg">
+		</audio>
+	</div>
+
+<script src="./js/index.js"></script>
+</body>
+</html>
