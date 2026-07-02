@@ -1,44 +1,95 @@
 /*************************************************************************/
+/* Small helpers (declared first, but hoisted so they can be used above) */
 
-let table = document.getElementById("table");
-let tableBtn = document.getElementById("table-btn");
-let mainContainerOne = document.getElementById("main-container-one");
-let menu = document.getElementById("menu");
-let monitor = document.getElementById("monitor");
-let clock = document.getElementById("clock");
-let pointsMonitor = document.getElementById("points-monitor");
+function idCatch(id) {
+	return document.getElementById(id);
+}
 
-/*Audio Stuff*/
-let wrongSound = document.getElementById("wrong-sound");
-let correctSound = document.getElementById("correct-sound");
-let startSound = document.getElementById("start-sound");
-let timerSound = document.getElementById("timer-sound");
+function createElement(el, parent) {
+	const element = document.createElement(el);
+	parent.appendChild(element);
+	return element;
+}
+
+function displayNone(...args) {
+	for (let i = 0; i < args.length; i++) {
+		args[i].style.display = "none";
+	}
+}
+
+function displayBlock(...args) {
+	for (let i = 0; i < args.length; i++) {
+		args[i].style.display = "block";
+	}
+}
+
+function displayFlex(...args) {
+	for (let i = 0; i < args.length; i++) {
+		args[i].style.display = "flex";
+	}
+}
+
+/*************************************************************************/
+/* Element references */
+
+const table = idCatch("table");
+const tableBtn = idCatch("table-btn");
+const mainContainerOne = idCatch("main-container-one");
+const menu = idCatch("menu");
+const monitor = idCatch("monitor");
+const clock = idCatch("clock");
+const pointsMonitor = idCatch("points-monitor");
+
+/* Audio */
+const wrongSound = idCatch("wrong-sound");
+const correctSound = idCatch("correct-sound");
+const startSound = idCatch("start-sound");
+const timerSound = idCatch("timer-sound");
 wrongSound.volume = 0.3;
 correctSound.volume = 0.3;
 timerSound.volume = 0.3;
 
-/*Arrays containing data for the chessboard used for game.*/
-let points = [];
-let pointValues = [];
+/*************************************************************************/
+/* Constants */
 
-let white = true;
-let lsElements = [];
-let globalPoints = 0;
-let str = "";
+const boardLetter = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const colorsWood = ["rgb(238, 219, 179)", "rgb(181, 135, 99)"];
+const colorsGreen = ["rgb(204, 215, 224)", "rgb(0, 128, 128)"];
+const colorsBlue = ["rgb(204, 215, 224)", "rgb(24, 89, 143)"];
+const colorsBlack = ["white", "black"];
 
-let boardLetter = ["a", "b", "c", "d", "e", "f", "g", "h"];
-let colorsWood = ["rgb(238, 219, 179)", "rgb(181, 135, 99)"];
-let colorsGreen = ["rgb(204, 215, 224)", "rgb(0, 128, 128)"];
-let colorsBlue = ["rgb(204, 215, 224)", "rgb(24, 89, 143)"];
-let colorsBlack = ["white", "black"];
-/*tableOneColors are used in setFieldColor()*/
-let tableOneColors = ["rgb(204, 215, 224)", "rgb(0, 128, 128)"];
+const GAME_DURATION = 30;
+const SCORES_KEY = "topScores";
+const MAX_SCORES = 10;
 
 /*************************************************************************/
-/*"Routing"*/
+/* Single source of truth for mutable state. Logic reads from this
+   object instead of inferring state from rendered DOM text. */
 
-/*Initial conditions*/
-displayNone(idCatch("main-container-two"),menu, idCatch("introduction"));
+const state = {
+	/* Game board */
+	white: true,
+	score: 0,
+	target: "",
+	gameOver: false,
+	gameColors: [...colorsGreen],
+	points: [],       /* 2D array of game-board square elements */
+	pointValues: [],  /* 2D array of the coordinate name of each square */
+
+	/* Tutorial board */
+	tutorialWhite: true,
+	tutorialPoints: [],
+	tutorialValues: [],
+};
+
+/* DOM references for the currently rendered leaderboard rows. */
+let scoreRows = [];
+
+/*************************************************************************/
+/* "Routing" */
+
+/* Initial conditions */
+displayNone(idCatch("main-container-two"), menu, idCatch("introduction"));
 displayBlock(mainContainerOne);
 
 idCatch("to-intro").addEventListener("click", toIntroduction);
@@ -58,17 +109,16 @@ idCatch("back-one").addEventListener("click", () => {
 	tableBtn.innerHTML = "START";
 });
 
-let theEnd = false;
 idCatch("cancel-btn").addEventListener("click", () => {
-	theEnd = true;
+	state.gameOver = true;
 	displayFlex(menu);
 	tableBtn.innerHTML = "RETRY";
 	monitor.innerHTML = "";
 	clock.children[0].innerHTML = "0";
 	pointsMonitor.children[0].innerHTML = "0";
 	idCatch("score-div").innerHTML = "";
-	globalPoints = 0;
-	str = "";
+	state.score = 0;
+	state.target = "";
 	removeClickListeners();
 	idCatch("main-container-two").style.opacity = 0.2;
 });
@@ -99,108 +149,90 @@ function fromIntroduction() {
 }
 
 /*************************************************************************/
-/*Board Building part*/
+/* Board building part */
 
-scoresBuilder(idCatch("top-scores-div"));
-boardBuilder(points, true, table, colorsGreen);
-valueGiver(white, pointValues);
+renderScores(idCatch("top-scores-div"));
+boardBuilder(state.points, true, table, colorsGreen);
+valueGiver(state.white, state.pointValues);
 
-let secondPoints = [];
-let secondValues = [];
-boardBuilder(secondPoints, true, idCatch("table-two"), colorsGreen);
-valueGiver(true, secondValues);
-makeHoverElements(secondPoints, secondValues);
-makeSideElements(secondPoints, secondValues);
+boardBuilder(state.tutorialPoints, true, idCatch("table-two"), colorsGreen);
+valueGiver(true, state.tutorialValues);
+makeHoverElements(state.tutorialPoints, state.tutorialValues);
+makeSideElements(state.tutorialPoints, state.tutorialValues);
 
 /*************************************************************************/
-/*"Tutorial" Board Functionality*/
+/* Tutorial board functionality */
 
 idCatch("board-side-btn").addEventListener("click", () => {
-	if(idCatch("text-under").innerHTML == "CHANGE TO<br>WHITE SIDE") {
-		flipTheBoard(true, false, secondPoints, secondValues);
-		changeHoverElements();
-		changeSideElements(secondPoints, secondValues);
-		idCatch("text-under").innerHTML = "CHANGE TO<br>BLACK SIDE";
-	} else if(idCatch("text-under").innerHTML == "CHANGE TO<br>BLACK SIDE") {
-		flipTheBoard(false, false, secondPoints, secondValues);
-		changeHoverElements();
-		changeSideElements(secondPoints, secondValues);
+	if (state.tutorialWhite) {
+		flipTheBoard(false, false, state.tutorialPoints, state.tutorialValues);
+		state.tutorialWhite = false;
 		idCatch("text-under").innerHTML = "CHANGE TO<br>WHITE SIDE";
+	} else {
+		flipTheBoard(true, false, state.tutorialPoints, state.tutorialValues);
+		state.tutorialWhite = true;
+		idCatch("text-under").innerHTML = "CHANGE TO<br>BLACK SIDE";
 	}
+	changeHoverElements();
+	changeSideElements(state.tutorialPoints, state.tutorialValues);
 });
 
 changeBackground(idCatch("g-theme"), idCatch("themes-1"));
 idCatch("w-theme").addEventListener("click", () => {
-	let w = false;
-	if(idCatch("left7").innerHTML == "1") {
-		w = true;
-	}
-	changeTheme(w, secondPoints, colorsWood);
+	changeTheme(state.tutorialWhite, state.tutorialPoints, colorsWood);
 	changeHoverElements();
 	changeBackground(idCatch("w-theme"), idCatch("themes-1"));
-})
+});
 
 idCatch("g-theme").addEventListener("click", () => {
-	let w = false;
-	if(idCatch("left7").innerHTML == "1") {
-		w = true;
-	}
-	changeTheme(w, secondPoints, colorsGreen);
+	changeTheme(state.tutorialWhite, state.tutorialPoints, colorsGreen);
 	changeHoverElements();
 	changeBackground(idCatch("g-theme"), idCatch("themes-1"));
-})
+});
 
 idCatch("b-theme").addEventListener("click", () => {
-	let w = false;
-	if(idCatch("left7").innerHTML == "1") {
-		w = true;
-	}
-	changeTheme(w, secondPoints, colorsBlue);
+	changeTheme(state.tutorialWhite, state.tutorialPoints, colorsBlue);
 	changeHoverElements();
 	changeBackground(idCatch("b-theme"), idCatch("themes-1"));
-})
+});
 
 idCatch("bl-theme").addEventListener("click", () => {
-	let w = false;
-	if(idCatch("left7").innerHTML == "1") {
-		w = true;
-	}
-	changeTheme(w, secondPoints, colorsBlack);
+	changeTheme(state.tutorialWhite, state.tutorialPoints, colorsBlack);
 	changeHoverElements();
 	changeBackground(idCatch("bl-theme"), idCatch("themes-1"));
-})
+});
 
 /*************************************************************************/
-/*Themes for game board*/
+/* Themes for the game board */
 
 changeBackground(idCatch("w-theme-2"), idCatch("themes-2"));
 idCatch("w-theme-2").addEventListener("click", () => {
-	changeTheme(white, points, colorsWood);
-	tableOneColors = [...colorsWood];
+	changeTheme(state.white, state.points, colorsWood);
+	state.gameColors = [...colorsWood];
 	changeBackground(idCatch("w-theme-2"), idCatch("themes-2"));
-})
+});
 
 idCatch("g-theme-2").addEventListener("click", () => {
-	changeTheme(white, points, colorsGreen);
-	tableOneColors = [...colorsGreen];
+	changeTheme(state.white, state.points, colorsGreen);
+	state.gameColors = [...colorsGreen];
 	changeBackground(idCatch("g-theme-2"), idCatch("themes-2"));
-})
+});
 
 idCatch("b-theme-2").addEventListener("click", () => {
-	changeTheme(white, points, colorsBlue);
-	tableOneColors = [...colorsBlue];
+	changeTheme(state.white, state.points, colorsBlue);
+	state.gameColors = [...colorsBlue];
 	changeBackground(idCatch("b-theme-2"), idCatch("themes-2"));
-})
+});
 
 idCatch("bl-theme-2").addEventListener("click", () => {
-	changeTheme(white, points, colorsBlack);
-	tableOneColors = [...colorsBlack];
+	changeTheme(state.white, state.points, colorsBlack);
+	state.gameColors = [...colorsBlack];
 	changeBackground(idCatch("bl-theme-2"), idCatch("themes-2"));
-})
+});
 
 function changeBackground(x, parent) {
-	for(let i = 0; i < parent.children.length; i++) {
-		if(x.innerHTML == parent.children.item(i).children.item(1).innerHTML) {
+	for (let i = 0; i < parent.children.length; i++) {
+		if (x.innerHTML == parent.children.item(i).children.item(1).innerHTML) {
 			parent.children.item(i).style.backgroundColor = "#1e2838";
 		} else {
 			parent.children.item(i).style.backgroundColor = "rgb(14, 19, 27)";
@@ -209,26 +241,25 @@ function changeBackground(x, parent) {
 }
 
 /*************************************************************************/
-/*These functions are instrumental in game section.*/
+/* Core board helpers */
 
-/*A function that creates a chessboard.*/
+/* Creates a chessboard inside "parent" and fills "arr" with the squares. */
 function boardBuilder(arr, w, parent, colors) {
-	let startingColor = 1;
-	if(w) {
-		startingColor = 0;
-	}
-	for(let i = 0; i < 8; i++) {
-		arr[i] = new Array();
-		temp = createElement("div", parent);
-		temp.setAttribute("class", "row");
-		temp.setAttribute("id", "row" + i + parent.id);
+	let startingColor = w ? 0 : 1;
+	for (let i = 0; i < 8; i++) {
+		arr[i] = [];
+		const row = createElement("div", parent);
+		row.setAttribute("class", "row");
+		row.setAttribute("id", "row" + i + parent.id);
+		row.dataset.row = i;
 		let start = startingColor;
 
-		for(let j = 0; j < 8; j++) {
-			arr[i][j] = createElement("div", temp);
+		for (let j = 0; j < 8; j++) {
+			arr[i][j] = createElement("div", row);
 			arr[i][j].setAttribute("class", "field");
-			if(j > 0) {
-				if(start == 0) {
+			arr[i][j].dataset.col = j;
+			if (j > 0) {
+				if (start == 0) {
 					arr[i][j].style.backgroundColor = colors[1];
 					start = 1;
 				} else {
@@ -240,26 +271,24 @@ function boardBuilder(arr, w, parent, colors) {
 			}
 		}
 
-		if(startingColor == 0) {
-			startingColor = 1
-		} else {
-			startingColor = 0;
-		}
+		startingColor = startingColor == 0 ? 1 : 0;
 	}
 }
 
-/*A function that starts the game.*/
-function initiateGame() {
-	theEnd = false;
+/* Returns a random square name such as "g7". */
+function pickTarget() {
+	return boardLetter[Math.round(Math.random() * 7)] + (Math.round(Math.random() * 7) + 1);
+}
 
-	let tempBool = true;
-	if(Math.round(Math.random()) == 0) {
-		tempBool = false;
+/* Starts a round. */
+function initiateGame() {
+	state.gameOver = false;
+
+	const side = Math.round(Math.random()) === 1;
+	if (side !== state.white) {
+		flipTheBoard(side, true, state.points, state.pointValues);
 	}
-	if(tempBool != white) {
-		flipTheBoard(tempBool, true, points, pointValues);
-	}
-	if(tempBool) {
+	if (side) {
 		idCatch("board-color").style.color = "black";
 		idCatch("board-color").style.backgroundColor = "white";
 		idCatch("board-color").innerHTML = "WHITE";
@@ -274,193 +303,143 @@ function initiateGame() {
 	displayNone(menu);
 	idCatch("main-container-two").style.opacity = 1;
 	displayFlex(idCatch("main-container-two"));
-	globalPoints = 0;
+	state.score = 0;
 	clock.style.color = "#5c66f2";
 	let time = 0;
-	let m = setInterval(go, 1000);
+	const m = setInterval(go, 1000);
 
 	function go() {
-		if(theEnd == false) {
-			if(time == 30) {
-				addToStorage(globalPoints);
-				deleteScores();
-				scoresBuilder(idCatch("top-scores-div"));
-				let c = findScore(lsElements, globalPoints);
-				if(c != -1) {
-					lsElements[c].style.backgroundColor = "#293d96";
-				}
-				displayFlex(menu);
-				tableBtn.innerHTML = "RETRY";
-				monitor.innerHTML = "";
-				clock.children[0].innerHTML = "0";
-				pointsMonitor.children[0].innerHTML = "";
-				idCatch("score-div").innerHTML = "YOUR SCORE:<br>" + "<span class='bigger'>"
-					+ globalPoints + "</span>";
-				globalPoints = 0;
-				str = "";
-				removeClickListeners();
-				idCatch("main-container-two").style.opacity = 0.2;
-				clearInterval(m);
-			} else {
-				time++;
-				clock.children[0].innerHTML = time;
-				if(time > 20) {
-					timerSound.currentTime = 0;
-					timerSound.play();
-					clock.style.color = "red";
-					clock.style.borderColor = "red";
-					setTimeout(() => {
-						clock.style.color = "#5c66f2";
-						clock.style.borderColor = "#171e4d";
-					}, 500);
-				}
-			}
-		} else {
+		if (state.gameOver) {
 			clearInterval(m);
+			return;
+		}
+		if (time === GAME_DURATION) {
+			addScore(state.score);
+			renderScores(idCatch("top-scores-div"));
+			highlightScore(state.score);
+			displayFlex(menu);
+			tableBtn.innerHTML = "RETRY";
+			monitor.innerHTML = "";
+			clock.children[0].innerHTML = "0";
+			pointsMonitor.children[0].innerHTML = "";
+			idCatch("score-div").innerHTML = "YOUR SCORE:<br>" +
+				"<span class='bigger'>" + state.score + "</span>";
+			state.score = 0;
+			state.target = "";
+			removeClickListeners();
+			idCatch("main-container-two").style.opacity = 0.2;
+			clearInterval(m);
+		} else {
+			time++;
+			clock.children[0].innerHTML = time;
+			if (time > 20) {
+				timerSound.currentTime = 0;
+				timerSound.play();
+				clock.style.color = "red";
+				clock.style.borderColor = "red";
+				setTimeout(() => {
+					clock.style.color = "#5c66f2";
+					clock.style.borderColor = "#171e4d";
+				}, 500);
+			}
 		}
 	}
+
 	findThisSquare();
 }
 
-/*A function that assingns events to squres, and it changes the global var "str",
-which is used for storing the sqaure name the player needs to find.*/
+/* Picks the next target square and wires click handlers on the board. */
 function findThisSquare() {
-	str = boardLetter[Math.round(Math.random()*7)] + (Math.round(Math.random()*7) + 1);
-	monitor.innerHTML = "Find " + str;
-	for(let i = 0; i < 8; i++) {
-		for(let j = 0; j < 8; j++) {
-			let p = points[i][j];
-			points[i][j].addEventListener("click", fieldClickEvent);
+	state.target = pickTarget();
+	monitor.innerHTML = "Find " + state.target;
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			state.points[i][j].addEventListener("click", fieldClickEvent);
 		}
 	}
 }
 
-/*A function that details what happens when the square is clicked.*/
-function fieldClickEvent() {
-	let a = findCooridinates(event.target);
-	if(str == pointValues[a[0]][a[1]]) {
+/* What happens when a square is clicked. */
+function fieldClickEvent(e) {
+	const a = findCoordinates(e.target);
+	const clicked = e.target;
+	if (state.target === state.pointValues[a[0]][a[1]]) {
 		correctSound.currentTime = 0;
-		event.target.style.backgroundColor = "#12b552";
-		globalPoints++;
-		pointsMonitor.children[0].innerHTML = globalPoints;
-		str = boardLetter[Math.round(Math.random()*7)] + (Math.round(Math.random()*7) + 1);
-		monitor.innerHTML = "Find " + str;
-		let c = event.target;
-		setTimeout(() => {
-			setFieldColor(c);
-		}, 500);
+		clicked.style.backgroundColor = "#12b552";
+		state.score++;
+		pointsMonitor.children[0].innerHTML = state.score;
+		state.target = pickTarget();
+		monitor.innerHTML = "Find " + state.target;
+		setTimeout(() => setFieldColor(clicked), 500);
 		correctSound.play();
 	} else {
 		wrongSound.currentTime = 0;
-		event.target.style.backgroundColor = "red";
-		globalPoints--;
-		pointsMonitor.children[0].innerHTML = globalPoints;
+		clicked.style.backgroundColor = "red";
+		state.score--;
+		pointsMonitor.children[0].innerHTML = state.score;
 		wrongSound.play();
-		let c = event.target;
-		setTimeout(() => {
-			setFieldColor(c);
-		}, 500);
-		
+		setTimeout(() => setFieldColor(clicked), 500);
 	}
 }
 
-/*A function used in animation for when the square is clicked. Its job is to
-restore square color to its previous value.*/
+/* Restores a square to its correct theme color after the click flash. */
 function setFieldColor(x) {
-	for(let i = 0; i < 8; i++) {
-		let boo = false;
-		for(let j = 0; j < 8; j++) {
-			let p = pointValues[i][j];
-			let c = findCooridinates(x);
-			if(p == pointValues[c[0]][c[1]]) {
+	const [i, j] = findCoordinates(x);
+	const light = state.white ? state.gameColors[0] : state.gameColors[1];
+	const dark = state.white ? state.gameColors[1] : state.gameColors[0];
 
-				boo = true;
-				let str1 = "";
-				let str2 = "";
-
-				if(white) {
-					str1 = tableOneColors[0];
-					str2 = tableOneColors[1];
-				} else {
-					str1 = tableOneColors[1];
-					str2 = tableOneColors[0];
-				}
-
-				if((j + 1)%2 == 0) {
-					if((i + 1)%2) {
-						x.style.backgroundColor = str2;
-					} else {
-						x.style.backgroundColor = str1;
-					}
-				} else if((j + 1)%2 != 0){
-					if((i + 1)%2) {
-						x.style.backgroundColor = str1;
-					} else {
-						x.style.backgroundColor = str2;
-					}
-				}
-
-				break;
-			}
-		}
-		if(boo) {
-			break;
-		}
+	if ((j + 1) % 2 === 0) {
+		x.style.backgroundColor = (i + 1) % 2 ? dark : light;
+	} else {
+		x.style.backgroundColor = (i + 1) % 2 ? light : dark;
 	}
 }
 
-/*Given the element as input, it returns its position in our 2D array.*/
-function findCooridinates(x) {
-	let parent = x.parentElement;
-	let a = [];
-	a[0] = parseInt(parent.id.split("")[3]);
-
-	for(let i = 0; i < parent.childNodes.length; i++) {
-		if(x == parent.childNodes[i]) {
-			a[1] = i;
-			break;
-		}
-	}
-	return a;
+/* Returns the [row, col] of a square element using data attributes. */
+function findCoordinates(x) {
+	return [
+		parseInt(x.parentElement.dataset.row, 10),
+		parseInt(x.dataset.col, 10),
+	];
 }
 
 function removeClickListeners() {
-	for(let i = 0; i < 8; i++) {
-		for(let j = 0; j < 8; j++) {
-			points[i][j].removeEventListener("click", fieldClickEvent);
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			state.points[i][j].removeEventListener("click", fieldClickEvent);
 		}
 	}
 }
 
-
 /*************************************************************************/
-/*A function that changes sides of the board, black or white, and it
-has an option to change global var "white", which stores the current side
-of the game board.*/
+/* Board orientation and themes */
+
+/* Flips the board between white and black sides. When changeWhite is true
+   it also updates the game side stored in state. */
 function flipTheBoard(w, changeWhite, pointsArr, valuesArr) {
-	if(changeWhite == true) {
-		white = w;
+	if (changeWhite) {
+		state.white = w;
 	}
 	colorFlip(pointsArr);
 	valuesArr.length = 0;
-	for(let i = 0; i < 8; i++){
-		valuesArr[i] = new Array();
+	for (let i = 0; i < 8; i++) {
+		valuesArr[i] = [];
 	}
 	valueGiver(w, valuesArr);
 }
 
 function valueGiver(w, arr) {
-	if(w) {
-		for(let i = 0; i < 8; i++) {
-			arr[i] = new Array();
-			for(let j = 0; j < 8; j++) {
-				arr[i][j] =  boardLetter[j] + parseInt(8 - i);
+	if (w) {
+		for (let i = 0; i < 8; i++) {
+			arr[i] = [];
+			for (let j = 0; j < 8; j++) {
+				arr[i][j] = boardLetter[j] + parseInt(8 - i);
 			}
 		}
 	} else {
-		for(let i = 0; i < 8; i++) {
-			arr[i] = new Array();
-			for(let j = 0; j < 8; j++) {
+		for (let i = 0; i < 8; i++) {
+			arr[i] = [];
+			for (let j = 0; j < 8; j++) {
 				arr[i][j] = boardLetter[7 - j] + parseInt(i + 1);
 			}
 		}
@@ -468,57 +447,44 @@ function valueGiver(w, arr) {
 }
 
 function colorFlip(arr) {
-
-	for(let i = 0; i < 8; i++) {
-		for(let j = 0; j < 8; j++) {
-			if(j == 0){
-				let temp = arr[i][j].style.backgroundColor;
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			if (j == 0) {
+				const temp = arr[i][j].style.backgroundColor;
 				arr[i][j].style.backgroundColor = arr[i][j + 1].style.backgroundColor;
 				arr[i][j + 1].style.backgroundColor = temp;
-			} else if(j > 1) {
+			} else if (j > 1) {
 				arr[i][j].style.backgroundColor = arr[i][j - 2].style.backgroundColor;
 			}
 		}
 	}
 }
 
-/*A function that changes board colors*/
 function changeTheme(w, arr, col) {
-
-	let counter = 0;
-	if(w == false) {
-		counter = 1;
-	}
-	for(let j = 0; j < 8; j++) {
-		for(let i = 0; i < 8; i++) {
+	let counter = w ? 0 : 1;
+	for (let j = 0; j < 8; j++) {
+		for (let i = 0; i < 8; i++) {
 			arr[i][j].style.backgroundColor = col[counter];
 			counter++;
-			if(counter == 2) {
+			if (counter == 2) {
 				counter = 0;
 			}
 		}
-		if(counter == 0) {
-			counter = 1;
-		} else {
-			counter = 0;
-		}
+		counter = counter == 0 ? 1 : 0;
 	}
 }
 
-
 /*************************************************************************/
-/*These next functions create additional elements and functionality for
-the non-game board, located in tutorial section.*/
-
+/* Extra elements for the tutorial (non-game) board */
 
 function makeHoverElements(arr, valuesArr) {
-	for(let i = 0; i < 8; i++) {
-		for(let j = 0; j < 8; j++) {
-			let temp = createElement("div", arr[i][j]);
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			const temp = createElement("div", arr[i][j]);
 			temp.setAttribute("class", "hoverboard");
 			temp.innerHTML = valuesArr[i][j];
 			temp.setAttribute("id", "h" + i + "and" + j);
-			if(j > 0) {
+			if (j > 0) {
 				temp.style.color = arr[i][j - 1].style.backgroundColor;
 			} else {
 				temp.style.color = arr[i][j + 1].style.backgroundColor;
@@ -528,21 +494,21 @@ function makeHoverElements(arr, valuesArr) {
 }
 
 function changeHoverElements() {
-	for(let i = 0; i < 8; i++) {
-		for(let j = 0; j < 8; j++) {
-			idCatch("h" + i + "and" + j).innerHTML = secondValues[i][j];
-			if(j > 0) {
-				idCatch("h" + i + "and" + j).style.color = secondPoints[i][j - 1].style.backgroundColor;
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			idCatch("h" + i + "and" + j).innerHTML = state.tutorialValues[i][j];
+			if (j > 0) {
+				idCatch("h" + i + "and" + j).style.color = state.tutorialPoints[i][j - 1].style.backgroundColor;
 			} else {
-				idCatch("h" + i + "and" + j).style.color = secondPoints[i][j + 1].style.backgroundColor;
+				idCatch("h" + i + "and" + j).style.color = state.tutorialPoints[i][j + 1].style.backgroundColor;
 			}
 		}
 	}
 }
 
 function makeSideElements(arrPoints, arrValues) {
-	for(let i = 0; i < 8; i++) {
-		let temp = createElement("div", arrPoints[i][0].parentElement);
+	for (let i = 0; i < 8; i++) {
+		const temp = createElement("div", arrPoints[i][0].parentElement);
 		temp.style.position = "absolute";
 		temp.style.color = "white";
 		temp.innerHTML = arrValues[i][0].split("")[1];
@@ -554,12 +520,12 @@ function makeSideElements(arrPoints, arrValues) {
 		temp.setAttribute("id", "left" + i);
 		temp.style.zIndex = 1000;
 	}
-	for(let i = 0; i < 8; i++) {
-		let temp = createElement("div", arrPoints[7][i].parentElement);
+	for (let i = 0; i < 8; i++) {
+		const temp = createElement("div", arrPoints[7][i].parentElement);
 		temp.style.position = "absolute";
 		temp.style.color = "white";
 		temp.innerHTML = arrValues[7][i].split("")[0];
-		temp.style.left = 6.25*(i*2 + 1) + "%";
+		temp.style.left = 6.25 * (i * 2 + 1) + "%";
 		temp.style.transform = "translateX(-50%)";
 		temp.style.bottom = "-50%";
 		temp.style.fontWeight = "bold";
@@ -567,162 +533,101 @@ function makeSideElements(arrPoints, arrValues) {
 		temp.setAttribute("id", "bottom" + i);
 		temp.style.zIndex = 1000;
 	}
-
 }
 
 function changeSideElements(arrPoints, arrValues) {
-	for(let i = 0; i < 8; i++) {
+	for (let i = 0; i < 8; i++) {
 		idCatch("left" + i).innerHTML = arrValues[i][0].split("")[1];
 	}
-	for(let i = 0; i < 8; i++) {
+	for (let i = 0; i < 8; i++) {
 		idCatch("bottom" + i).innerHTML = arrValues[7][i].split("")[0];
 	}
 }
 
-
 /*************************************************************************/
-/*Local storage and scores handling*/
+/* Local storage and scores handling.
 
-function addToStorage(data) {
-	let temp = [];
-	for(let i = 0; i < localStorage.length; i++) {
-        temp[i] = parseInt(localStorage.getItem(i));
-    }
- 	temp[localStorage.length] = data;
-    let a = sortArr(temp);
+   Scores are stored as a single JSON array under one key, sorted in
+   descending order and capped at MAX_SCORES. This replaces the previous
+   per-index storage, which had an off-by-one that hid the top score and
+   rendered empty rows. */
 
-    if(localStorage.length == 0) {
-    	localStorage.setItem(0, a[0]);
-    } else {
-    	let limit = 0;
-    	if(localStorage.length == 10) {
-    		a.pop();
-    		limit = localStorage.length;
-    	} else {
-    		limit = localStorage.length + 1;
-    	}
-	    for(let i = 0; i < limit; i++) {
-	    	localStorage.setItem(i, a[i]);
-	    }
+function getScores() {
+	try {
+		const raw = localStorage.getItem(SCORES_KEY);
+		const parsed = raw ? JSON.parse(raw) : [];
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (err) {
+		return [];
 	}
 }
 
-function scoresBuilder(mainParent) {
-	if(localStorage.length == 0) {
-		let parent = createElement("h1", mainParent);
-		let element = createElement("h1", parent);
-		element.innerHTML = "TOP SCORES";
-		let element2 = createElement("p", parent);
-		element2.style.fontSize = "20px";
-		element2.innerHTML = "No scores yet...";
-		element2.style.textAlign = "center";
-	} else {
-		let parent = createElement("h1", mainParent);
-		let title = createElement("h1", parent);
-		title.innerHTML = "TOP SCORES";
-		for(let i = 0; i < 10; i++) {
-			let parent2 = createElement("div", parent);
-			lsElements.push(parent2);
-			parent2.setAttribute("class", "fx");
-			parent2.style.borderLeft = "3px solid teal";
-			parent2.style.borderRight = "3px solid teal";
-			let element = createElement("p", parent2);
-			element.innerHTML = (i + 1) + ".";
-			element.style.width = "15%";
-			element.style.margin = "5px 0 5px 0";
-			element.style.paddingRight = "10px";
-			element.style.fontWeight = "bold";
-			element.style.fontSize = "11px";
-			element.style.textAlign = "center";
-			element.style.color = "#1d3b6b";
-			let element2 = createElement("p", parent2);
-			element2.style.width = "30px";
-			element2.innerHTML = localStorage.getItem(i + 1);
-			element2.style.margin = "5px 0 5px 0";
-			element2.style.fontWeight = "bold";
-			element2.style.fontSize = "17px";
-			element2.style.textAlign = "center";
-			element2.style.width = "85%";
-			element2.style.color = "#03a8a8";
+function addScore(score) {
+	const scores = getScores();
+	scores.push(score);
+	scores.sort((a, b) => b - a);
+	if (scores.length > MAX_SCORES) {
+		scores.length = MAX_SCORES;
+	}
+	localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+}
+
+function renderScores(mainParent) {
+	mainParent.innerHTML = "";
+	scoreRows = [];
+
+	const scores = getScores();
+	const container = createElement("h1", mainParent);
+	const title = createElement("h1", container);
+	title.innerHTML = "TOP SCORES";
+
+	if (scores.length === 0) {
+		const empty = createElement("p", container);
+		empty.style.fontSize = "20px";
+		empty.style.textAlign = "center";
+		empty.innerHTML = "No scores yet...";
+		return;
+	}
+
+	for (let i = 0; i < scores.length; i++) {
+		const row = createElement("div", container);
+		scoreRows.push(row);
+		row.setAttribute("class", "fx");
+		row.style.borderLeft = "3px solid teal";
+		row.style.borderRight = "3px solid teal";
+
+		const rank = createElement("p", row);
+		rank.innerHTML = (i + 1) + ".";
+		rank.style.width = "15%";
+		rank.style.margin = "5px 0 5px 0";
+		rank.style.paddingRight = "10px";
+		rank.style.fontWeight = "bold";
+		rank.style.fontSize = "11px";
+		rank.style.textAlign = "center";
+		rank.style.color = "#1d3b6b";
+
+		const value = createElement("p", row);
+		value.innerHTML = scores[i];
+		value.style.margin = "5px 0 5px 0";
+		value.style.fontWeight = "bold";
+		value.style.fontSize = "17px";
+		value.style.textAlign = "center";
+		value.style.width = "85%";
+		value.style.color = "#03a8a8";
+	}
+}
+
+/* Highlights the row belonging to the score just achieved. When several
+   rows share the value, the lowest-ranked one (the new entry) is used. */
+function highlightScore(score) {
+	const scores = getScores();
+	let idx = -1;
+	for (let i = 0; i < scores.length; i++) {
+		if (scores[i] === score) {
+			idx = i;
 		}
 	}
-}
-
-function deleteScores() {
-	idCatch("top-scores-div").removeChild(idCatch("top-scores-div").children[0]);
-	lsElements.length = 0;
-}
-
-function findScore(a, num) {
-    let index = -1;
-    for (let i = 0; i < a.length; i++) { 
-        if (i < a.length - 1) {
-            if ((num == parseInt(a[i].children[1].innerHTML)) 
-            	&& (num != parseInt(a[i+1].children[1].innerHTML))) {
-                index = i;
-            }
-        } else if (num == parseInt(a[a.length - 1].children[1].innerHTML)){
-            index = a.length - 1;
-        }
-    }
-    return index;
-}
-
-function sortArr(a) {
-    for (let i = 0; i < a.length; i++) {
-        let min = a[i];
-        let index = i;
-        for (let j = i; j < a.length; j++) {
-            if (a[j] > min) {
-                min = a[j];
-                index = j;
-            }
-        }
-        if (a[i] != min) {
-            let temp = a[i];
-            a[i] = a[index];
-            a[index] = temp;
-        }
-    }
-    return a;
-}
-
-/*************************************************************************/
-
-function rgbColorSplitter(str) {
-	let s = str.split(",");
-	let a = [];
-	a[0] = parseInt(s[0].split("(")[1]);
-	a[1] = parseInt(s[1]);
-	a[2] = parseInt(s[2].split(")")[0]);
-	return a;
-}
-
-function createElement(el, parentId) {
-    let element = document.createElement(el);
-    parentId.appendChild(element);
-    return element;
-}
-
-function idCatch(id) {
-    return document.getElementById(id);
-}
-
-/*Display functions*/
-function displayNone(...arg){
-    for(let i = 0; i < arg.length; i++){
-        arg[i].style.display = "none";
-    }
-}
-
-function displayBlock(...arg){
-    for(let i = 0; i < arg.length; i++){
-        arg[i].style.display = "block";
-    }
-}
-
-function displayFlex(...arg){
-    for(let i = 0; i < arg.length; i++){
-        arg[i].style.display = "flex";
-    }
+	if (idx !== -1 && scoreRows[idx]) {
+		scoreRows[idx].style.backgroundColor = "#293d96";
+	}
 }
