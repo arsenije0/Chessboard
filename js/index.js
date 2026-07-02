@@ -90,7 +90,7 @@ let scoreRows = [];
 
 /* Initial conditions */
 displayNone(idCatch("main-container-two"), menu, idCatch("introduction"));
-displayBlock(mainContainerOne);
+displayFlex(mainContainerOne);
 
 idCatch("to-intro").addEventListener("click", toIntroduction);
 idCatch("back-three").addEventListener("click", fromIntroduction);
@@ -103,7 +103,7 @@ idCatch("back-two").addEventListener("click", fromScores);
 
 idCatch("back-one").addEventListener("click", () => {
 	displayNone(idCatch("main-container-two"), menu);
-	displayBlock(mainContainerOne);
+	displayFlex(mainContainerOne);
 	idCatch("score-div").innerHTML = "";
 	idCatch("main-container-two").style.opacity = 0.2;
 	tableBtn.innerHTML = "START";
@@ -145,7 +145,7 @@ function toIntroduction() {
 
 function fromIntroduction() {
 	displayNone(idCatch("introduction"));
-	displayBlock(mainContainerOne);
+	displayFlex(mainContainerOne);
 }
 
 /*************************************************************************/
