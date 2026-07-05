@@ -1,26 +1,47 @@
+/*************************************************************************/
+/* Apple x Bauhaus design system.
+   Geometry: circle, square, triangle. Primary accents used sparingly.
+   Typography: Jost (Futura-inspired), generous whitespace, hairline rules. */
+
+:root {
+	--ink: #1d1d1f;
+	--ink-soft: #6e6e73;
+	--paper: #f5f3ee;
+	--card: #ffffff;
+	--hairline: #dcd8cf;
+	--red: #d1372c;
+	--blue: #2456a4;
+	--yellow: #f2b135;
+	--green-ok: #3f8f4f;
+	--shadow: 0 10px 30px rgba(29, 29, 31, 0.08);
+}
+
 body {
-	background-color: rgb(14, 19, 27);
-	font-family: 'Montserrat', sans-serif;
+	background-color: var(--paper);
+	color: var(--ink);
+	font-family: 'Jost', 'Futura', -apple-system, 'Helvetica Neue', sans-serif;
 	user-select: none;
 	margin: 0;
+	-webkit-font-smoothing: antialiased;
 }
 
 button {
 	outline: 0;
+	font-family: inherit;
 }
 
 #main-container-one {
 	position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 #main-container-two {
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	transform: translate(-50%, -50%); 
+	transform: translate(-50%, -50%);
 	width: 100%;
 	display: flex;
 	justify-content: center;
@@ -28,47 +49,93 @@ button {
 }
 
 /*=====================================================*/
+/* Landing */
 
 #intro {
 	margin: auto;
-	width: 400px;
+	width: 440px;
 	text-align: center;
-	color: white;
-	margin-bottom: 50px; 
+	margin-bottom: 60px;
 }
 
 #intro h1 {
-	border-radius: 10px;
-	color: teal;
-	font-size: 50px;
-	margin: 0;
+	color: var(--ink);
+	font-size: 54px;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	margin: 0 0 6px 0;
+}
+
+#intro p {
+	color: var(--ink-soft);
+	font-size: 15px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	margin: 0 0 22px 0;
+}
+
+/* Bauhaus tricolor rule */
+#intro::after {
+	content: "";
+	display: block;
+	width: 180px;
+	height: 6px;
+	margin: 0 auto;
+	background: linear-gradient(90deg,
+		var(--red) 0 33.4%,
+		var(--yellow) 33.4% 66.7%,
+		var(--blue) 66.7% 100%);
 }
 
 .option {
 	height: 150px;
 	width: 150px;
 	border-radius: 50%;
-	background-color: teal;
-	text-align: center;
+	background-color: var(--card);
+	border: 2px solid var(--ink);
+	box-shadow: var(--shadow);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .option:hover {
 	cursor: pointer;
-	background-color: #029e9e;
+	background-color: var(--yellow);
+	transform: translateY(-3px);
 }
 
-.glyph-style {
-	font-size: 80px;
-	padding-top: 35px;
-	color: rgb(14, 19, 27);
+.glyph {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
 }
 
-.option:hover .g {
-	color: black;
+/* Checkerboard square: introduction */
+.glyph-board::before {
+	content: "";
+	width: 54px;
+	height: 54px;
+	box-sizing: border-box;
+	border: 3px solid var(--ink);
+	background:
+		conic-gradient(var(--ink) 0 25%, transparent 0 50%, var(--ink) 0 75%, transparent 0)
+		0 0 / 50% 50%;
 }
 
-.option:hover + .when-hover {
-	opacity: 1;
+/* Play triangle: game */
+.glyph-play::before {
+	content: "";
+	width: 44px;
+	height: 50px;
+	margin-left: 8px;
+	background: var(--red);
+	clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 
 #options-container {
@@ -86,27 +153,33 @@ button {
 
 .when-hover {
 	text-align: center;
-	font-size: 17px;
-	color: white;
-	opacity: 0;
-	transition: opacity 1s;
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.18em;
+	color: var(--ink-soft);
+	margin-top: 18px;
 }
 
 /*=====================================================*/
+/* Game screen */
 
 #table {
 	position: relative;
 	width: 45%;
 	cursor: pointer;
+	box-shadow: var(--shadow);
+	border: 2px solid var(--ink);
+	box-sizing: border-box;
 }
 
 #game-one-stuff {
 	display: flex;
 	flex-flow: column;
-	padding: 5px;
-	border: 4px solid #1a2433;
-	border-radius: 10px;
-	margin-left: 10%;
+	padding: 28px 34px;
+	background-color: var(--card);
+	border: 2px solid var(--ink);
+	margin-left: 8%;
+	box-shadow: var(--shadow);
 }
 
 .row {
@@ -121,84 +194,90 @@ button {
 }
 
 .field:after {
-  content: "";
-  display: block;
-  padding-bottom: 100%;
+	content: "";
+	display: block;
+	padding-bottom: 100%;
 }
 
 #board-color {
 	height: 30px;
 	width: 100px;
-	border-radius: 10px;
-	background-color: black;
-	color: white;
+	background-color: var(--ink);
+	color: var(--card);
 	margin: auto;
 	text-align: center;
-	font-weight: bold;
+	font-weight: 600;
 	font-size: 12px;
-	margin-bottom: 15px;
+	letter-spacing: 0.14em;
+	margin-bottom: 18px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	border: 2px solid var(--ink);
+	box-sizing: border-box;
 }
 
 #monitor {
-	font-size: 34px;
-	font-weight: bold;
+	font-size: 32px;
+	font-weight: 600;
 	text-align: center;
-	color: white;
+	color: var(--ink);
 	height: 50px;
 	min-width: 150px;
-	margin-bottom: 30px;
+	margin-bottom: 26px;
 }
 
+/* Yellow circle: time */
 #clock {
 	position: relative;
 	box-sizing: border-box;
-	color: #5c66f2;
+	color: var(--ink);
 	text-align: center;
-	margin: auto; 
-	height: 70px;
-	width: 70px;
-	border: 5px solid  #171e4d; 
+	margin: auto;
+	height: 72px;
+	width: 72px;
+	border: 4px solid var(--yellow);
 	border-radius: 50%;
-	font-size: 20px;
-	font-weight: bold;
+	font-size: 22px;
+	font-weight: 600;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	margin-bottom: 30px;
-	background-color: #171e4d;
+	margin-bottom: 26px;
+	background-color: var(--yellow);
 }
 
 #points-text {
-	color: #3c4275;
+	color: var(--ink-soft);
 	text-align: center;
 	margin: auto;
-	font-size: 12px;
-	font-weight: bold;
-	margin-bottom: 5px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	margin-bottom: 8px;
 }
 
+/* Blue circle: score */
 #points-monitor {
 	position: relative;
 	box-sizing: border-box;
-	color: #5962b5;
+	color: var(--card);
 	text-align: center;
 	height: 80px;
 	width: 80px;
-	font-size: 20px;
+	font-size: 22px;
 	border-radius: 50%;
-	border: 5px solid #232745;
-	background-color: #232745;
+	border: 4px solid var(--blue);
+	background-color: var(--blue);
 	margin: auto;
-	font-weight: bold;
+	font-weight: 600;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
 /*=====================================================*/
+/* Cancel control: red square inside a circle */
 
 .bullet-point-container {
 	position: relative;
@@ -206,13 +285,15 @@ button {
 	height: 50px;
 	width: 50px;
 	border-radius: 50%;
-	background-color: #242e47;
-	transition: all .5s;
+	background-color: var(--card);
+	border: 2px solid var(--ink);
+	transition: all 0.2s ease;
 }
 
 .bullet-point-container:hover {
 	cursor: pointer;
-	background-color: black;
+	background-color: var(--red);
+	border-color: var(--red);
 }
 
 .bullet-point-origin {
@@ -225,44 +306,34 @@ button {
 
 .bullet-point {
 	position: absolute;
-	background-color: white;
-	border-radius: 50%;
+	background-color: var(--red);
 	top: 0;
 	left: 0;
 	transform: translate(-50%, -50%);
-	height: 15px;
-	width: 15px;
-	transition: all .5s;
+	height: 14px;
+	width: 14px;
+	transition: all 0.2s ease;
 }
 
 .bullet-point-container:hover .bullet-point {
-	width: 20px;
-	height: 20px;
-	background-color: red;
+	background-color: var(--card);
 }
-
-/*=====================================================*/
 
 #cancel-btn {
-	font-size: 26px;
-	padding-top: 6px;
 	margin: auto;
-	margin-top: 20px;
-}
-
-#cancel-btn:hover {
-	color: red;
+	margin-top: 24px;
 }
 
 #cancel-text {
 	opacity: 0;
-	color: red;
+	color: var(--red);
 	text-align: center;
 	margin: auto;
-	margin-top: 5px;
+	margin-top: 8px;
 	font-size: 10px;
-	font-weight: bold;
-	transition: all .5s;
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	transition: opacity 0.2s ease;
 }
 
 #cancel-btn:hover + #cancel-text {
@@ -270,6 +341,7 @@ button {
 }
 
 /*=====================================================*/
+/* Menu */
 
 .my-menu {
 	position: absolute;
@@ -293,8 +365,10 @@ button {
 
 #score-div {
 	padding-top: 10px;
-	color: white;
-	font-size: 17px;
+	color: var(--ink);
+	font-size: 16px;
+	font-weight: 500;
+	letter-spacing: 0.14em;
 	margin-bottom: 10px;
 	text-align: center;
 }
@@ -304,19 +378,22 @@ button {
 	display: none;
 	flex-flow: column;
 	justify-content: center;
-	align-items: center; 
+	align-items: center;
 }
 
 #top-scores-div {
-	color: #4579c4;
+	color: var(--ink);
 	padding-bottom: 30px;
+	min-width: 260px;
 }
 
 #top-scores-div h1 {
 	text-align: center;
 	margin: auto;
-	font-size: 37px;
-	padding-bottom: 10px;
+	font-size: 30px;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	padding-bottom: 14px;
 }
 
 .flexy {
@@ -330,30 +407,45 @@ button {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background-color: #0d1c33;
+	background-color: var(--card);
 	margin-right: 0px;
 }
 
 .my-btn {
-	height: 90px;
-	width: 140px;
-	border-radius: 20px;
-	background-color:   rgb(14, 19, 27);
-	background-color: #1b2433;
+	height: 64px;
+	width: 150px;
+	background-color: var(--card);
 	text-align: center;
-	color: teal;
-	font-size: 20px;
-	font-weight: bold;
-	border: 3px solid teal;
-	transition: all 0.5s ease;
+	color: var(--ink);
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	border: 2px solid var(--ink);
+	transition: all 0.2s ease;
 	padding: 0px 25px 0px 25px;
 	margin: 0 10px 0 10px;
+	box-shadow: var(--shadow);
 }
 
+.my-btn:hover {
+	cursor: pointer;
+	background-color: var(--ink);
+	color: var(--card);
+}
+
+/* Primary action: red circle */
 #table-btn {
 	height: 140px;
 	width: 140px;
 	border-radius: 50%;
+	background-color: var(--red);
+	border-color: var(--red);
+	color: var(--card);
+}
+
+#table-btn:hover {
+	background-color: var(--ink);
+	border-color: var(--ink);
 }
 
 #back-three {
@@ -365,34 +457,42 @@ button {
 	margin-bottom: 20px;
 }
 
-.my-btn:hover {
-	cursor: pointer;
-	background-color: black;
-	color: white;
-}
-
+/* Info dot */
 .dot {
 	box-sizing: border-box;
-	height: 25px;
-	width: 25px;
+	height: 26px;
+	width: 26px;
 	border-radius: 50%;
-	background-color: rgb(14, 19, 27);
-	border: 3px dashed teal;
-	transition: transform 1s;
+	background-color: var(--card);
+	border: 2px solid var(--ink);
+	transition: background-color 0.2s ease;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.dot::after {
+	content: "i";
+	font-size: 14px;
+	font-weight: 600;
+	font-style: italic;
+	color: var(--ink);
 }
 
 .dot:hover {
 	cursor: pointer;
-	background-color: black;
-	transform: rotate(180deg);
+	background-color: var(--yellow);
 }
 
 #dot-p {
-	color: white;
+	color: var(--ink-soft);
 	opacity: 0;
-	transition: opacity 1.5s;
+	transition: opacity 0.4s ease;
 	text-align: center;
 	width: 70%;
+	max-width: 460px;
+	font-size: 14px;
+	line-height: 1.6;
 }
 
 .dot:hover + #dot-p {
@@ -400,20 +500,25 @@ button {
 }
 
 /*=====================================================*/
+/* Introduction / tutorial */
 
 #introduction-two {
 	text-align: center;
 	width: 60%;
+	max-width: 680px;
 	margin: auto;
 	margin-top: 50px;
 }
 
 #introduction-two p {
-	color: white;
+	color: var(--ink);
 	text-align: left;
-	background-color: #141b26; 
-	padding: 20px;
-	border-radius: 10px;
+	background-color: var(--card);
+	border: 1px solid var(--hairline);
+	padding: 26px 30px;
+	font-size: 16px;
+	line-height: 1.7;
+	box-shadow: var(--shadow);
 }
 
 #table-two {
@@ -421,12 +526,37 @@ button {
 	margin: auto;
 	margin-top: 20px;
 	margin-bottom: 30px;
+	border: 2px solid var(--ink);
+	box-sizing: content-box;
+	box-shadow: var(--shadow);
 }
 
 .bigger {
 	display: inline-block;
 	padding-top: 10px;
-	font-size: 30px;  
+	font-size: 30px;
+	font-weight: 600;
+}
+
+/* "g3 is highlighted on the board" line under the final score */
+.last-target {
+	display: block;
+	margin-top: 10px;
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	color: var(--ink-soft);
+	text-transform: none;
+}
+
+.last-target::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background-color: var(--yellow);
+	margin-right: 7px;
+	vertical-align: baseline;
 }
 
 #table-two:hover {
@@ -447,9 +577,9 @@ button {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	opacity: 0;
-	transition: opacity .5s;
+	transition: opacity 0.2s ease;
 	font-size: 20px;
-	font-weight: bold;
+	font-weight: 600;
 }
 
 .field:hover .hoverboard {
@@ -460,13 +590,14 @@ button {
 	position: absolute;
 	left: 50%;
 	transform: translateX(-50%);
-	bottom: -35px;
-	font-size: 11px;
-	color: teal; 
-	width: 80px;
+	bottom: -38px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: var(--ink-soft);
+	width: 90px;
 	opacity: 0;
-	transition: opacity .5s;
-	font-weight: bold;
+	transition: opacity 0.2s ease;
 }
 
 #board-side-btn:hover #text-under {
@@ -474,38 +605,44 @@ button {
 }
 
 /*******************************************/
+/* Round controls */
 
 .color-choice {
 	position: relative;
-	height: 35px;
-	width: 35px;
+	height: 38px;
+	width: 38px;
 	border-radius: 50%;
-	border: none;
-	background-color: rgba(32, 47, 117, 0.5);
+	border: 2px solid var(--ink);
+	background-color: var(--card);
+	box-sizing: border-box;
+	padding: 0;
 }
 
 .color-choice:hover {
 	cursor: pointer;
 }
 
-.color-choice-item {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	border-radius: 50%; 
-	height: 0px;
-	width: 0px;
-	background-color: rgba(32, 47, 117, 1);
-	transition: all .5s;
+/* Theme pickers: Bauhaus color wheel */
+#color-choice-one,
+#color-choice-2 {
+	background: conic-gradient(
+		var(--red) 0 25%,
+		var(--yellow) 25% 50%,
+		var(--blue) 50% 75%,
+		var(--ink) 75% 100%);
 }
 
-.color-choice:hover .color-choice-item {
-	height: 40px;
-	width: 40px;
+/* Side flip: half black, half white */
+#board-side-btn {
+	background: linear-gradient(90deg, var(--ink) 0 50%, var(--card) 50% 100%);
+}
+
+.color-choice-item {
+	display: none;
 }
 
 /*******************************************/
+/* Theme popup */
 
 .themes {
 	box-sizing: border-box;
@@ -514,31 +651,33 @@ button {
 	align-items: center;
 	visibility: hidden;
 	position: absolute;
-	width: 170px;
-	height: 170px;
-	border-radius: 50%;
+	width: 190px;
+	padding: 14px 0;
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%, -50%);
 	flex-flow: column;
 	z-index: 1000;
 	opacity: 0;
-	transition: opacity 1s;
-	background-color: rgb(14, 19, 27);
-	border: 3px solid teal;
+	transition: opacity 0.2s ease;
+	background-color: var(--card);
+	border: 2px solid var(--ink);
+	box-shadow: var(--shadow);
 }
 
 .col {
-	height: 20px;
-	width: 120px;
-	background-color: rgb(14, 19, 27);
+	height: 24px;
+	width: 150px;
+	background-color: var(--card);
 	display: flex;
 	margin: 3px;
 }
 
 .col-box {
-	height: 20px;
-	width: 20px;
+	height: 24px;
+	width: 24px;
+	border: 1px solid var(--hairline);
+	box-sizing: border-box;
 }
 
 .col-choice {
@@ -546,30 +685,31 @@ button {
 	justify-content: center;
 	align-items: center;
 	font-size: 12px;
-	color: white;
-	font-weight: bold; 
+	color: var(--ink);
+	font-weight: 500;
+	letter-spacing: 0.06em;
 	text-align: center;
 	width: 100%;
 }
 
 .col-choice:hover {
-	color: teal;
+	color: var(--red);
 }
 
 .wood {
-	background-color: rgb(181, 135, 99);
+	background-color: #b58763;
 }
 
 .green {
-	background-color: rgb(0, 128, 128);
+	background-color: #537d5d;
 }
 
 .blue {
-	background-color: rgb(24, 89, 143);
+	background-color: #4a6d9c;
 }
 
 .black {
-	background-color: black;
+	background-color: #1d1d1f;
 }
 
 /*******************************************/
@@ -580,10 +720,6 @@ button {
 	visibility: visible;
 }
 
-#color-choice-one:hover {
-	padding-bottom: 20px; 
-}
-
 #color-choice-2:hover .themes {
 	cursor: pointer;
 	opacity: 1;
@@ -591,9 +727,9 @@ button {
 }
 
 #under-pic {
-	color: white;
+	color: var(--ink-soft);
 	font-style: italic;
-	font-size: 11px;
+	font-size: 12px;
 	display: inline-block;
 	margin-bottom: 30px;
 }
@@ -601,13 +737,30 @@ button {
 .tutorialTitle {
 	width: 100%;
 	margin: auto;
-	color: teal;
+	margin-top: 40px;
+	color: var(--ink);
 	text-align: center;
-	background-color: #141b26;
-	padding: 10px 0 10px 0;
+	font-size: 32px;
+	font-weight: 600;
+	letter-spacing: 0.16em;
+	padding: 10px 0 18px 0;
+	position: relative;
+}
+
+.tutorialTitle::after {
+	content: "";
+	display: block;
+	width: 140px;
+	height: 5px;
+	margin: 16px auto 0 auto;
+	background: linear-gradient(90deg,
+		var(--red) 0 33.4%,
+		var(--yellow) 33.4% 66.7%,
+		var(--blue) 66.7% 100%);
 }
 
 /*******************************************/
+/* Responsive */
 
 @media (max-width: 800px) {
 	#table {
@@ -633,28 +786,20 @@ button {
 		flex-flow: row;
 		justify-content: space-between;
 		align-items: center;
-		padding: 5px;
+		padding: 12px 16px;
 		margin-top: 25px;
 		margin-left: 0;
-		border: 2px solid #1a2433;
-		border-radius: 10px;
-		overflow: none;
 	}
 
 	#board-color {
-		height: 65px;
+		height: 30px;
 		width: 15%;
-		border-radius: 5px;
-		font-size: 8px;
-		border-radius: 0;
-		border-bottom-left-radius: 10px;
-		border-top-left-radius: 10px;
+		font-size: 9px;
 	}
 
 	#monitor {
-		font-size: 20px;
-		color: white;
-		height: 65px;
+		font-size: 22px;
+		height: 48px;
 		width: 40%;
 		display: flex;
 		justify-content: center;
@@ -662,35 +807,27 @@ button {
 	}
 
 	#clock {
-		height: 65px;
-		width: 15%;
-		border-radius: 0;
-		border: 3px solid  #171e4d;
-		font-size: 15px;
-	}
-
-	#points-text {
-		font-size: 8px;
+		height: 48px;
+		width: 48px;
+		border-width: 3px;
+		font-size: 16px;
+		margin-bottom: 0;
 	}
 
 	#points-monitor {
-		height: 65px;
-		width: 15%;
-		border-radius: 0;
-		font-size: 15px;
-		border: 3px solid #232745;
+		height: 48px;
+		width: 48px;
+		border-width: 3px;
+		font-size: 16px;
 	}
 
 	#top-scores-div h1 {
-		font-size: 25px;
+		font-size: 24px;
 	}
 
 	.bullet-point-container {
-		height: 65px;
-		width: 15%;
-		border-radius: 0;
-		border-bottom-right-radius: 10px;
-		border-top-right-radius: 10px;
+		height: 48px;
+		width: 48px;
 	}
 
 	.bullet-point {
@@ -703,15 +840,15 @@ button {
 
 	#intro {
 		width: 300px;
-		margin-bottom: 50px; 
+		margin-bottom: 50px;
 	}
 
 	#intro h1 {
-		font-size: 30px;
+		font-size: 32px;
 	}
 
 	#intro p {
-		font-size: 12px;
+		font-size: 11px;
 	}
 
 	.option {
@@ -720,13 +857,20 @@ button {
 		margin: 0 10px 0 10px;
 	}
 
-	.glyph-style {
-		font-size: 50px;
-		padding-top: 25px;
+	.glyph-board::before {
+		width: 38px;
+		height: 38px;
+		border-width: 2px;
+	}
+
+	.glyph-play::before {
+		width: 30px;
+		height: 34px;
+		margin-left: 6px;
 	}
 
 	.when-hover {
-		font-size: 13px;
+		font-size: 11px;
 	}
 
 	#options-container {
@@ -736,11 +880,12 @@ button {
 	/**********************************/
 
 	#introduction-two p {
-		font-size: 12px;
+		font-size: 14px;
+		padding: 18px 20px;
 	}
 
-	#introduction h1 {
-		font-size: 25px;
+	.tutorialTitle {
+		font-size: 24px;
 	}
 
 	#flexy-one {
@@ -751,31 +896,30 @@ button {
 	}
 
 	#text-under {
-		bottom: -30px;
-		color: teal;
+		bottom: -32px;
 		font-size: 9px;
-
 	}
 
-	.hoverboard {		
+	.hoverboard {
 		font-size: 15px;
 	}
 
 	/**********************************/
 
 	.my-btn {
-		height: 60px;
-		width: 100px;
+		height: 52px;
+		width: 110px;
 		font-size: 12px;
 		text-align: center;
 		margin-bottom: 20px;
+		padding: 0 15px;
 	}
 
-	#table-btn { 
-		height: 70px;
-		width: 110px;
-		border-radius: 20px;
-		font-size: 14px;
+	#table-btn {
+		height: 90px;
+		width: 90px;
+		font-size: 13px;
+		padding: 0;
 	}
 
 	#scores-btn {
@@ -783,21 +927,18 @@ button {
 	}
 
 	#dot-p {
-		font-size: 11px;
+		font-size: 12px;
 	}
 
 	/**********************************/
 
 	.themes {
-		
-		width: 150px;
-		height: 150px;
-		border: 3px solid teal;
+		width: 170px;
 	}
 
 	.col {
-		height: 20px;
-		width: 100px;
+		height: 22px;
+		width: 130px;
 	}
 
 	.col-choice {
@@ -819,6 +960,6 @@ button {
 
 @media (max-width: 450px) {
 	#table {
-		width: 70%;
+		width: 82%;
 	}
 }

@@ -54,9 +54,18 @@ timerSound.volume = 0.3;
 
 const boardLetter = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const colorsWood = ["rgb(238, 219, 179)", "rgb(181, 135, 99)"];
-const colorsGreen = ["rgb(204, 215, 224)", "rgb(0, 128, 128)"];
-const colorsBlue = ["rgb(204, 215, 224)", "rgb(24, 89, 143)"];
-const colorsBlack = ["white", "black"];
+const colorsGreen = ["rgb(240, 237, 229)", "rgb(83, 125, 93)"];
+const colorsBlue = ["rgb(240, 237, 229)", "rgb(74, 109, 156)"];
+const colorsBlack = ["rgb(255, 255, 255)", "rgb(29, 29, 31)"];
+
+/* UI palette (kept in sync with the CSS custom properties) */
+const UI_INK = "#1d1d1f";
+const UI_INK_SOFT = "#6e6e73";
+const UI_CARD = "#ffffff";
+const UI_RED = "#d1372c";
+const UI_YELLOW = "#f2b135";
+const UI_YELLOW_SOFT = "#faf0d8";
+const UI_GREEN_OK = "#3f8f4f";
 
 const GAME_DURATION = 30;
 const SCORES_KEY = "topScores";
@@ -71,6 +80,7 @@ const state = {
 	white: true,
 	score: 0,
 	target: "",
+	revealed: null,   /* Square highlighted as the answer after time runs out */
 	gameOver: false,
 	gameColors: [...colorsGreen],
 	points: [],       /* 2D array of game-board square elements */
@@ -205,7 +215,7 @@ idCatch("bl-theme").addEventListener("click", () => {
 /*************************************************************************/
 /* Themes for the game board */
 
-changeBackground(idCatch("w-theme-2"), idCatch("themes-2"));
+changeBackground(idCatch("g-theme-2"), idCatch("themes-2"));
 idCatch("w-theme-2").addEventListener("click", () => {
 	changeTheme(state.white, state.points, colorsWood);
 	state.gameColors = [...colorsWood];
@@ -233,9 +243,9 @@ idCatch("bl-theme-2").addEventListener("click", () => {
 function changeBackground(x, parent) {
 	for (let i = 0; i < parent.children.length; i++) {
 		if (x.innerHTML == parent.children.item(i).children.item(1).innerHTML) {
-			parent.children.item(i).style.backgroundColor = "#1e2838";
+			parent.children.item(i).style.backgroundColor = UI_YELLOW_SOFT;
 		} else {
-			parent.children.item(i).style.backgroundColor = "rgb(14, 19, 27)";
+			parent.children.item(i).style.backgroundColor = UI_CARD;
 		}
 	}
 }
@@ -280,21 +290,44 @@ function pickTarget() {
 	return boardLetter[Math.round(Math.random() * 7)] + (Math.round(Math.random() * 7) + 1);
 }
 
+/* Reveals the square that was being asked for when time ran out. */
+function revealTarget() {
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			if (state.pointValues[i][j] === state.target) {
+				state.revealed = state.points[i][j];
+				state.revealed.style.backgroundColor = UI_YELLOW;
+				return;
+			}
+		}
+	}
+}
+
+/* Restores the revealed square to its theme color. Must run before any
+   board flip, because colorFlip propagates computed square colors. */
+function clearRevealedTarget() {
+	if (state.revealed) {
+		setFieldColor(state.revealed);
+		state.revealed = null;
+	}
+}
+
 /* Starts a round. */
 function initiateGame() {
 	state.gameOver = false;
+	clearRevealedTarget();
 
 	const side = Math.round(Math.random()) === 1;
 	if (side !== state.white) {
 		flipTheBoard(side, true, state.points, state.pointValues);
 	}
 	if (side) {
-		idCatch("board-color").style.color = "black";
-		idCatch("board-color").style.backgroundColor = "white";
+		idCatch("board-color").style.color = UI_INK;
+		idCatch("board-color").style.backgroundColor = UI_CARD;
 		idCatch("board-color").innerHTML = "WHITE";
 	} else {
-		idCatch("board-color").style.color = "white";
-		idCatch("board-color").style.backgroundColor = "black";
+		idCatch("board-color").style.color = UI_CARD;
+		idCatch("board-color").style.backgroundColor = UI_INK;
 		idCatch("board-color").innerHTML = "BLACK";
 	}
 
@@ -304,7 +337,8 @@ function initiateGame() {
 	idCatch("main-container-two").style.opacity = 1;
 	displayFlex(idCatch("main-container-two"));
 	state.score = 0;
-	clock.style.color = "#5c66f2";
+	pointsMonitor.children[0].innerHTML = "0";
+	clock.style.color = UI_INK;
 	let time = 0;
 	const m = setInterval(go, 1000);
 
@@ -317,17 +351,21 @@ function initiateGame() {
 			addScore(state.score);
 			renderScores(idCatch("top-scores-div"));
 			highlightScore(state.score);
+			revealTarget();
 			displayFlex(menu);
 			tableBtn.innerHTML = "RETRY";
 			monitor.innerHTML = "";
 			clock.children[0].innerHTML = "0";
 			pointsMonitor.children[0].innerHTML = "";
 			idCatch("score-div").innerHTML = "YOUR SCORE:<br>" +
-				"<span class='bigger'>" + state.score + "</span>";
+				"<span class='bigger'>" + state.score + "</span>" +
+				"<span class='last-target'>" + state.target +
+				" is highlighted on the board</span>";
 			state.score = 0;
 			state.target = "";
 			removeClickListeners();
-			idCatch("main-container-two").style.opacity = 0.2;
+			/* Dim less than on cancel so the revealed square stays visible */
+			idCatch("main-container-two").style.opacity = 0.45;
 			clearInterval(m);
 		} else {
 			time++;
@@ -335,11 +373,13 @@ function initiateGame() {
 			if (time > 20) {
 				timerSound.currentTime = 0;
 				timerSound.play();
-				clock.style.color = "red";
-				clock.style.borderColor = "red";
+				clock.style.color = UI_CARD;
+				clock.style.backgroundColor = UI_RED;
+				clock.style.borderColor = UI_RED;
 				setTimeout(() => {
-					clock.style.color = "#5c66f2";
-					clock.style.borderColor = "#171e4d";
+					clock.style.color = UI_INK;
+					clock.style.backgroundColor = UI_YELLOW;
+					clock.style.borderColor = UI_YELLOW;
 				}, 500);
 			}
 		}
@@ -365,7 +405,7 @@ function fieldClickEvent(e) {
 	const clicked = e.target;
 	if (state.target === state.pointValues[a[0]][a[1]]) {
 		correctSound.currentTime = 0;
-		clicked.style.backgroundColor = "#12b552";
+		clicked.style.backgroundColor = UI_GREEN_OK;
 		state.score++;
 		pointsMonitor.children[0].innerHTML = state.score;
 		state.target = pickTarget();
@@ -374,7 +414,7 @@ function fieldClickEvent(e) {
 		correctSound.play();
 	} else {
 		wrongSound.currentTime = 0;
-		clicked.style.backgroundColor = "red";
+		clicked.style.backgroundColor = UI_RED;
 		state.score--;
 		pointsMonitor.children[0].innerHTML = state.score;
 		wrongSound.play();
@@ -510,12 +550,12 @@ function makeSideElements(arrPoints, arrValues) {
 	for (let i = 0; i < 8; i++) {
 		const temp = createElement("div", arrPoints[i][0].parentElement);
 		temp.style.position = "absolute";
-		temp.style.color = "white";
+		temp.style.color = UI_INK;
 		temp.innerHTML = arrValues[i][0].split("")[1];
 		temp.style.top = "50%";
 		temp.style.transform = "translateY(-50%)";
-		temp.style.left = "-5%";
-		temp.style.fontWeight = "bold";
+		temp.style.left = "-7%";
+		temp.style.fontWeight = "600";
 		temp.style.fontSize = "11px";
 		temp.setAttribute("id", "left" + i);
 		temp.style.zIndex = 1000;
@@ -523,12 +563,12 @@ function makeSideElements(arrPoints, arrValues) {
 	for (let i = 0; i < 8; i++) {
 		const temp = createElement("div", arrPoints[7][i].parentElement);
 		temp.style.position = "absolute";
-		temp.style.color = "white";
+		temp.style.color = UI_INK;
 		temp.innerHTML = arrValues[7][i].split("")[0];
 		temp.style.left = 6.25 * (i * 2 + 1) + "%";
 		temp.style.transform = "translateX(-50%)";
-		temp.style.bottom = "-50%";
-		temp.style.fontWeight = "bold";
+		temp.style.bottom = "-55%";
+		temp.style.fontWeight = "600";
 		temp.style.fontSize = "11px";
 		temp.setAttribute("id", "bottom" + i);
 		temp.style.zIndex = 1000;
@@ -593,27 +633,28 @@ function renderScores(mainParent) {
 		const row = createElement("div", container);
 		scoreRows.push(row);
 		row.setAttribute("class", "fx");
-		row.style.borderLeft = "3px solid teal";
-		row.style.borderRight = "3px solid teal";
+		row.style.borderLeft = "3px solid " + UI_INK;
+		row.style.borderRight = "3px solid " + UI_INK;
+		row.style.borderBottom = "1px solid #dcd8cf";
 
 		const rank = createElement("p", row);
 		rank.innerHTML = (i + 1) + ".";
 		rank.style.width = "15%";
-		rank.style.margin = "5px 0 5px 0";
+		rank.style.margin = "6px 0 6px 0";
 		rank.style.paddingRight = "10px";
-		rank.style.fontWeight = "bold";
+		rank.style.fontWeight = "600";
 		rank.style.fontSize = "11px";
 		rank.style.textAlign = "center";
-		rank.style.color = "#1d3b6b";
+		rank.style.color = UI_INK_SOFT;
 
 		const value = createElement("p", row);
 		value.innerHTML = scores[i];
-		value.style.margin = "5px 0 5px 0";
-		value.style.fontWeight = "bold";
+		value.style.margin = "6px 0 6px 0";
+		value.style.fontWeight = "600";
 		value.style.fontSize = "17px";
 		value.style.textAlign = "center";
 		value.style.width = "85%";
-		value.style.color = "#03a8a8";
+		value.style.color = UI_INK;
 	}
 }
 
@@ -628,6 +669,6 @@ function highlightScore(score) {
 		}
 	}
 	if (idx !== -1 && scoreRows[idx]) {
-		scoreRows[idx].style.backgroundColor = "#293d96";
+		scoreRows[idx].style.backgroundColor = UI_YELLOW_SOFT;
 	}
 }
