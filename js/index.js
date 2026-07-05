@@ -80,6 +80,7 @@ const state = {
 	white: true,
 	score: 0,
 	target: "",
+	revealed: null,   /* Square highlighted as the answer after time runs out */
 	gameOver: false,
 	gameColors: [...colorsGreen],
 	points: [],       /* 2D array of game-board square elements */
@@ -289,9 +290,32 @@ function pickTarget() {
 	return boardLetter[Math.round(Math.random() * 7)] + (Math.round(Math.random() * 7) + 1);
 }
 
+/* Reveals the square that was being asked for when time ran out. */
+function revealTarget() {
+	for (let i = 0; i < 8; i++) {
+		for (let j = 0; j < 8; j++) {
+			if (state.pointValues[i][j] === state.target) {
+				state.revealed = state.points[i][j];
+				state.revealed.style.backgroundColor = UI_YELLOW;
+				return;
+			}
+		}
+	}
+}
+
+/* Restores the revealed square to its theme color. Must run before any
+   board flip, because colorFlip propagates computed square colors. */
+function clearRevealedTarget() {
+	if (state.revealed) {
+		setFieldColor(state.revealed);
+		state.revealed = null;
+	}
+}
+
 /* Starts a round. */
 function initiateGame() {
 	state.gameOver = false;
+	clearRevealedTarget();
 
 	const side = Math.round(Math.random()) === 1;
 	if (side !== state.white) {
@@ -327,17 +351,21 @@ function initiateGame() {
 			addScore(state.score);
 			renderScores(idCatch("top-scores-div"));
 			highlightScore(state.score);
+			revealTarget();
 			displayFlex(menu);
 			tableBtn.innerHTML = "RETRY";
 			monitor.innerHTML = "";
 			clock.children[0].innerHTML = "0";
 			pointsMonitor.children[0].innerHTML = "";
 			idCatch("score-div").innerHTML = "YOUR SCORE:<br>" +
-				"<span class='bigger'>" + state.score + "</span>";
+				"<span class='bigger'>" + state.score + "</span>" +
+				"<span class='last-target'>" + state.target +
+				" is highlighted on the board</span>";
 			state.score = 0;
 			state.target = "";
 			removeClickListeners();
-			idCatch("main-container-two").style.opacity = 0.2;
+			/* Dim less than on cancel so the revealed square stays visible */
+			idCatch("main-container-two").style.opacity = 0.45;
 			clearInterval(m);
 		} else {
 			time++;

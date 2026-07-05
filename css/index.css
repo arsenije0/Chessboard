@@ -538,6 +538,27 @@ button {
 	font-weight: 600;
 }
 
+/* "g3 is highlighted on the board" line under the final score */
+.last-target {
+	display: block;
+	margin-top: 10px;
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	color: var(--ink-soft);
+	text-transform: none;
+}
+
+.last-target::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background-color: var(--yellow);
+	margin-right: 7px;
+	vertical-align: baseline;
+}
+
 #table-two:hover {
 	cursor: pointer;
 }
